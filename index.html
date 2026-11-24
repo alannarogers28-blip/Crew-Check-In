@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>html{color-scheme:light dark}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Crew Check-in</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: two views on one page. "Take it" is one question per screen, phone-first. "Manager" is a scannable report: summary first, detail after. */
+:root{
+  --bg:#F5F4F0; --surface:#FFFFFF; --surface2:#ECEAE3; --fg:#1C1C1A; --muted:#5F5E5A; --line:#DAD8D0;
+  --accent:#0F6E56; --accent-soft:#E1F5EE; --accent-deep:#04342C; --accent-fg:#FFFFFF;
+  --blue-soft:#E6F1FB; --blue-fg:#0C447C; --amber-soft:#FAEEDA; --amber-fg:#633806; --purple-soft:#EEEDFE; --purple-fg:#3C3489; --red-soft:#FCEBEB; --red-fg:#791F1F;
+  --l0:#ECEAE3; --l0fg:#5F5E5A; --l1:#D7EFE6; --l1fg:#0F6E56; --l2:#9FDCC6; --l2fg:#04342C; --l3:#1D9E75; --l3fg:#FFFFFF; --l4:#085041; --l4fg:#FFFFFF;
+  --font-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --font-head:"Space Grotesk","Inter",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#171716; --surface:#201F1D; --surface2:#2A2927; --fg:#ECEAE3; --muted:#A8A69E; --line:#3A3936;
+  --accent:#4FC39A; --accent-soft:#113D31; --accent-deep:#C9F1E2; --accent-fg:#071A13;
+  --blue-soft:#13293D; --blue-fg:#9CC9F0; --amber-soft:#3B2A0E; --amber-fg:#F2C27B; --purple-soft:#26245A; --purple-fg:#C9C5F5; --red-soft:#3D1414; --red-fg:#F4A3A3;
+  --l0:#2A2927; --l0fg:#A8A69E; --l1:#1B3A30; --l1fg:#9FDCC6; --l2:#1F6B50; --l2fg:#E1F5EE; --l3:#2EAB82; --l3fg:#071A13; --l4:#8FE3C3; --l4fg:#071A13; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171716; --surface:#201F1D; --surface2:#2A2927; --fg:#ECEAE3; --muted:#A8A69E; --line:#3A3936;
+  --accent:#4FC39A; --accent-soft:#113D31; --accent-deep:#C9F1E2; --accent-fg:#071A13;
+  --blue-soft:#13293D; --blue-fg:#9CC9F0; --amber-soft:#3B2A0E; --amber-fg:#F2C27B; --purple-soft:#26245A; --purple-fg:#C9C5F5; --red-soft:#3D1414; --red-fg:#F4A3A3;
+  --l0:#2A2927; --l0fg:#A8A69E; --l1:#1B3A30; --l1fg:#9FDCC6; --l2:#1F6B50; --l2fg:#E1F5EE; --l3:#2EAB82; --l3fg:#071A13; --l4:#8FE3C3; --l4fg:#071A13; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:14px;padding-top:20px}
+.wrap.wide{max-width:980px}
+h1,h2,h3{font-family:var(--font-head);font-weight:600;letter-spacing:-0.01em;text-wrap:balance;margin:0}
+h1{font-size:24px}h2{font-size:19px}h3{font-size:15px}
+p{margin:0}.muted{color:var(--muted)}.small{font-size:13px}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav a{display:inline-block;padding:8px 14px;border-radius:999px;border:1px solid var(--line);color:var(--fg);text-decoration:none;font-weight:500;font-size:14px;background:var(--surface)}
+nav a[aria-current="page"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+button{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-height:48px;cursor:pointer;text-align:left}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600;text-align:center}
+button.ghost{border:none;background:none;color:var(--accent);font-weight:500;padding:6px 0;min-height:0}
+button.opt{width:100%;display:block}
+button.opt:hover,button.opt.on{background:var(--accent-soft);border-color:var(--accent)}
+button.sm{min-height:36px;padding:6px 12px;font-size:13px;border-radius:999px}
+button.sm.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two button{min-height:88px;text-align:center;font-size:18px;font-weight:600;font-family:var(--font-head)}
+.prog{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden}.prog i{display:block;height:100%;background:var(--accent)}
+.chip{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:500;line-height:1.5;white-space:nowrap}
+.c-acc{background:var(--accent-soft);color:var(--accent-deep)}.c-blue{background:var(--blue-soft);color:var(--blue-fg)}.c-amber{background:var(--amber-soft);color:var(--amber-fg)}.c-purple{background:var(--purple-soft);color:var(--purple-fg)}.c-gray{background:var(--surface2);color:var(--muted)}.c-red{background:var(--red-soft);color:var(--red-fg)}
+.lv0{background:var(--l0);color:var(--l0fg)}.lv1{background:var(--l1);color:var(--l1fg)}.lv2{background:var(--l2);color:var(--l2fg)}.lv3{background:var(--l3);color:var(--l3fg)}.lv4{background:var(--l4);color:var(--l4fg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+input[type=text],textarea,select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-height:48px;width:100%}
+textarea{min-height:90px}
+.type{font-family:var(--font-head);font-size:44px;font-weight:600;letter-spacing:.02em;line-height:1}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.err{color:var(--red-fg);font-size:13px}
+ul.clean{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+ul.clean li{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.private{background:var(--surface2);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.timer{height:4px;border-radius:2px;background:var(--surface2);overflow:hidden}.timer i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left}
+@media (prefers-reduced-motion:no-preference){.timer i.run{animation:tick 3s linear forwards}@keyframes tick{from{transform:scaleX(1)}to{transform:scaleX(0)}}}
+blockquote{margin:0;padding:10px 14px;border-left:3px solid var(--accent);background:var(--accent-soft);color:var(--accent-deep);border-radius:0 10px 10px 0;font-size:14px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase}
+.scroll{overflow-x:auto;max-width:100%}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tile .n{font-family:var(--font-head);font-size:26px;font-weight:600;line-height:1.1}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.ava{width:40px;height:40px;border-radius:50%;background:var(--accent-soft);color:var(--accent-deep);display:inline-flex;align-items:center;justify-content:center;font-weight:600;flex:none}
+.cmt{border-left:3px solid var(--line);padding:6px 10px;font-size:14px}
+.reply{margin-left:14px;font-size:13px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}.kv b{font-weight:500;color:var(--muted)}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+// ============ SETUP (the only two lines to change) ============
+// SHEET_URL: the web-app URL from your Google Sheet's Apps Script deployment. Leave "" and results travel by copy-and-text instead.
+// MANAGER_KEY: the same key you put in the Apps Script. Only someone with it can load submissions in the manager tab.
+const CONFIG={SHEET_URL:"",MANAGER_KEY:"",MANAGER_EMAIL:"alanna.rogers.28@gmail.com",PAGE_URL:"https://alannarogers28-blip.github.io/Crew-Check-In/"};
+// Personal links: PAGE_URL + "#firstname-AGE-ROLE", e.g. #riley-16-crew. AGE is 14, 16 or 18; ROLE is crew, baker or lead.
+function personFromHash(){const m=(location.hash||"").slice(1).match(/^([a-z][a-z-]*?)-(14|16|18)-(crew|baker|lead)$/);if(!m)return null;return{name:m[1].split("-").map(w=>w[0].toUpperCase()+w.slice(1)).join(" "),age:parseInt(m[2],10),role:m[3],slug:m[0]}}
+
+// ============ PART 1: WORK STYLE QUIZ ============
+const RAPID=[["W1","Call or text?",[["A","Call","E"],["B","Text","I"]]],["W2","Big party or movie night?",[["A","Party","E"],["B","Movie","I"]]],["W3","Follow the recipe or wing it?",[["A","Recipe","S"],["B","Wing it","N"]]],["W4","Directions: street names or \"turn at the gas station\"?",[["A","Street names","S"],["B","Gas station","N"]]],["W5","Fair or kind?",[["A","Fair","T"],["B","Kind","F"]]],["W6","Head or heart?",[["A","Head","T"],["B","Heart","F"]]],["W7","Plan it or play it by ear?",[["A","Plan","J"],["B","By ear","P"]]],["W8","Alarm set or wake up whenever?",[["A","Alarm","J"],["B","Whenever","P"]]],["W9","Early bird or night owl?",[["A","Early bird",null,null,null,"opener"],["B","Night owl",null,null,null,"closer"]]],["W10","Iced or hot, even in January?",[["A","Iced",null,null,null,"fun"],["B","Hot",null,null,null,"fun"]]]];
+const FUNNY=[["F1","Your go-to order when it's free:",[["A","Same thing every time. I don't mess with what works","S"],["B","Whatever's new on the board","N"],["C","The most expensive thing, obviously","T"],["D","Something I can share with whoever's on break","F"],["E","Depends on the weather and my mood","P"],["F","Type it yourself",null,null,null,"text"]]],["F2","The lobby TV is yours for an hour. What's on?",[["A","Sports","E"],["B","Cartoons","P"],["C","A cooking show I'll critique out loud","T"],["D","A nature documentary I will narrate","N"],["E","Whatever the customers want, I take requests","F"],["F","A documentary about how things get made","S"]]],["F3","Your drive-thru voice:",[["A","Radio host","E"],["B","Customer service robot","J"],["C","Same as my regular voice, unfortunately","I"],["D","Depends how the morning's going","P"],["E","Slightly more polite than I am in real life","F"],["F","Fast and clear, I'm not here to chat","T"]]],["F4","Your walk-up song for clocking in:",[["A","Something hype. Everyone needs to know I'm here","E"],["B","Something chill, I'm easing in","I"],["C","A different one for every mood, I have playlists","P"],["D","The same song every single time","J"],["E","Whatever's already on the lobby speaker, I'm not picky","F"],["F","Type it yourself",null,null,null,"text"]]],["F5","A customer calls you \"boss.\" You:",[["A","Feel powerful","T"],["B","Feel weird about it","I"],["C","Want to give them a free donut","F"],["D","Say \"that's me\" with zero hesitation","E"],["E","Correct them. Technically it's \"shift lead\"","S"],["F","Wonder what being the boss would actually take","N"]]],["F6","Which could you survive longer without?",[["A","My phone","I"],["B","Coffee","S"],["C","Sleep","P"],["D","Trick question, none of these","N"],["E","My coworkers (kidding, don't tell them)","E"],["F","My alarm, as long as someone calls to wake me up","F"]]],["F7","Pick your shift superpower:",[["A","Never dropping a drink again","S"],["B","Reading minds at the headset","N"],["C","Teleporting to the back for restock","I"],["D","Ending every rush in ten minutes","T"],["E","Knowing every regular's order before they say it","F"],["F","Making the whole crew laugh mid-rush","E"]]]];
+const TEST=[["Q1","EI","It's Friday night after a long week. What actually recharges you?",[["A","Having people over or going out. Being around friends fills me up","E"],["B","One close friend, something low-key","I"],["C","Alone with my show, my music, or my game","I"],["D","Doesn't matter where, as long as something's going on","E"],["E","Working a shift, to be honest. I like the energy of a busy store","E"],["F","Cooking or working on something by myself with music on","I"]]],["Q2","EI","You're put on front counter for a slow mid-afternoon. How do you feel about it?",[["A","Great. I'll chat with regulars and make the time fly","E","Customer warmth"],["B","Fine. I'll restock and wipe down between customers","I","Initiative"],["C","I'd rather be on sandwich or beverage where I can focus","I"],["D","I'd ask to swap to drive-thru so I'm talking to more people","E"],["E","I'll learn the regulars' names and orders so I know them next time","E","Customer warmth"],["F","I'll reorganize the front so the next rush goes smoother","I","Initiative"]]],["Q3","EI","Group project, first meeting. You're most likely the one who:",[["A","Starts talking first and gets everyone going","E","Initiative"],["B","Listens, then says the one thing that organizes the plan","I","Precision"],["C","Volunteers for the part you can do on your own","I","Follow-through"],["D","Keeps the group chat alive and makes sure everyone's in","E","Team-first"],["E","Asks what everyone's good at and hands out the parts","E","Ownership"],["F","Does the research before the next meeting so there's something to work with","I","Initiative"]]],["Q4","EI","A customer at the counter wants to tell you about their whole morning. The line is short. You:",[["A","Lean in. This is the best part of the job","E","Customer warmth"],["B","Smile, nod, and gently steer back to the order","I","Composure"],["C","Listen, but feel drained afterward","I"],["D","Pull a coworker into the conversation too","E","Team-first"],["E","Ask a follow-up question. People remember when you actually listen","E","Customer warmth"],["F","Keep working while they talk so the order's ready the second they finish","I","Initiative"]]],["Q5","EI","Your phone's blowing up with a group chat about weekend plans. You:",[["A","Jump in right away with ideas","E"],["B","Read it all, reply once with an actual plan","I","Follow-through"],["C","Mute it and catch up later","I"],["D","Call someone instead of typing","E"],["E","Suggest we all just meet up and figure it out in person","E"],["F","Thumbs-up and go with whatever gets decided","I","Team-first"]]],["Q6","EI","Break time during a long shift. You'd rather:",[["A","Sit with whoever's on break and talk","E"],["B","Step outside alone with headphones","I"],["C","Scroll in the back, not really talking","I"],["D","Check the floor and see if anyone needs anything","E","Initiative"],["E","Call or FaceTime someone","E"],["F","Eat quietly and reset. I'll be sharper for the second half","I","Composure"]]],["Q7","EI","You're assigned to present in class. Inside, you're:",[["A","Kind of excited. I like having the room","E"],["B","Fine once I start, dreading it until then","I"],["C","Wishing I could just turn in the paper instead","I"],["D","Already thinking about how to make it funny","E"],["E","Asking if I can do it as a group. I'm better bouncing off people","E","Team-first"],["F","Over-preparing so I never have to wing a single second of it","I","Precision"]]],["Q8","EI","New coworker's first shift, and nobody was assigned to show them around. You:",[["A","Introduce yourself and bring them along with you","E","Initiative"],["B","Say hi and show them your station when they come by","I"],["C","Wait for the lead to assign someone","I",null,"Waits to be told"],["D","Walk them around and introduce them to everyone on shift","E","Team-first"],["E","Ask the lead if I can be the one to train them","E","Ownership"],["F","Make them a cheat sheet of where everything is","I","Precision"]]],["Q9","SN","Someone shows you how to make a drink you've never made. What sticks?",[["A","The exact steps, in order. I'll do it the same way every time","S","Precision"],["B","Why each step matters, then I can adapt it","N"],["C","I need to do it myself a couple of times before it's real","S"],["D","The pattern. It's basically the other one but with X","N"],["E","I write the steps in my phone and check it until I don't need to","S","Follow-through"],["F","I taste it and work backward from what it's supposed to taste like","N"]]],["Q10","SN","Planning a trip with friends. You're the one who:",[["A","Finds the actual times, prices, and addresses","S","Follow-through"],["B","Comes up with the idea nobody else thought of","N","Initiative"],["C","Makes sure the plan works in real life","S","Precision"],["D","Thinks about what would make it memorable","N"],["E","Makes the group chat poll so everyone actually commits","S","Team-first"],["F","Spots the problem with the plan before anyone else does","N","Precision"]]],["Q11","SN","It's 10:40 and the morning rush is tapering off. What are you thinking?",[["A","Time to restock exactly what we're low on","S","Initiative"],["B","We should start prepping for lunch before it hits","N","Initiative"],["C","I'll do whatever the lead says is next","S"],["D","I'm already thinking about how to make tomorrow's rush smoother","N"],["E","Check sandwich and beverage counts against what we'll need","S","Precision"],["F","Notice who's dragging and swap stations so nobody burns out","N","Team-first"]]],["Q12","SN","A teacher gives vague instructions for an assignment. You:",[["A","Ask exactly what they want: length, format, due date","S","Precision"],["B","Make your best interpretation and run with it","N"],["C","Look at what people did last year","S"],["D","Take it somewhere interesting and see if they like it","N"],["E","Email the teacher after class with my understanding and ask if it's right","S","Ownership"],["F","Start with the part I'm sure about and let the rest take shape","N","Initiative"]]],["Q13","SN","The recipe card says 3 pumps, but the drink always tastes off to you. You:",[["A","Make it exactly as written. The card is the card","S","Follow-through"],["B","Mention it to the lead and ask if the card is right","S","Ownership"],["C","Try 2.5 pumps and see if customers like it better","N",null,"Goes it alone"],["D","Figure out why (syrup batch, ice amount) and tell someone","N","Initiative"],["E","Ask a coworker to taste it with me so it's not just my opinion","S","Team-first"],["F","Check whether the card's out of date. Maybe the recipe changed","N","Precision"]]],["Q14","SN","You remember a movie mostly by:",[["A","Specific scenes and lines","S"],["B","The overall feeling and what it meant","N"],["C","The details that didn't make sense","S","Precision"],["D","What I'd have done differently with the ending","N"],["E","The soundtrack and what the characters wore","S"],["F","The theme. What it was really about underneath","N"]]],["Q15","SN","Lead says \"the lobby looks rough.\" You see:",[["A","Three tables need wiping, trash is at 80%, napkins are out","S","Precision"],["B","The flow is wrong. The condiment station should move","N"],["C","I'll start at one end and work across","S","Follow-through"],["D","Someone needs to be assigned to lobby every hour","N","Initiative"],["E","Ask what \"rough\" means: floors, tables, or trash?","S","Coachable"],["F","Wonder why it got rough. Are we skipping lobby checks during the rush?","N"]]],["Q16","SN","You learn best when:",[["A","Someone walks me through it step by step","S"],["B","I get the big idea first, then fill in the rest","N"],["C","I can practice with real examples","S"],["D","I can connect it to something I already know","N"],["E","I watch someone do it, then copy exactly","S"],["F","I ask \"what happens if\" questions until I get the system","N"]]],["Q17","TF","A coworker is on their phone in the back during the rush. You:",[["A","Say \"hey, we need you\" and keep moving","T","Composure"],["B","Cover for them and bring it up after the rush, privately","F","Team-first"],["C","Tell the lead. It's not fair to everyone else working","T","Ownership"],["D","Let it go, they probably have something going on","F",null,"Lets it slide"],["E","Ask \"everything okay?\" If it's not an emergency, they'll get the hint","F","Composure"],["F","Point them at the station that needs a body: \"sandwich is backed up, go\"","T","Initiative"]]],["Q18","TF","Group project partner didn't do their part and it's due tomorrow. You:",[["A","Do it yourself and tell the teacher who did what","T","Follow-through"],["B","Text them: \"You okay? What do you need to finish?\"","F","Team-first"],["C","Do it yourself and say nothing","F",null,"Avoids hard conversations"],["D","Split what's left and say plainly it can't happen again","T","Ownership"],["E","Ask the teacher for an extension and explain what happened, no names","F","Ownership"],["F","Message them tonight: \"I'm doing 2 and 3. You've got 4 by 8am.\"","T","Initiative"]]],["Q19","TF","The lead tells you to redo the lobby you just cleaned. Inside, you:",[["A","Ask what specifically they want different","T","Coachable"],["B","Feel a little stung, but do it","F","Coachable"],["C","Think \"fine, but that was a waste of ten minutes\"","T"],["D","Wonder if they're annoyed with me","F",null,"Takes it personally"],["E","Do it, then ask later if there's a standard I'm missing","F","Coachable"],["F","Redo it, but point out the three things I already did so they know I wasn't slacking","T","Ownership"]]],["Q20","TF","A friend tells you a plan you think is a bad idea. You:",[["A","Tell them straight. I'd want them to tell me","T"],["B","Ask questions until they see it themselves","F"],["C","Say it, but lead with what's good about it","F"],["D","Lay out the pros and cons like a list","T","Precision"],["E","Offer to help so at least it doesn't go sideways","F","Team-first"],["F","Tell them what I'd do instead and let them decide","T"]]],["Q21","TF","A customer is wrong about their order but insists. The line's building. You:",[["A","Fix it their way and move on. Speed matters more than being right","T","Composure"],["B","Apologize warmly, fix it, make sure they leave happy","F","Customer warmth"],["C","Explain politely what they ordered, then fix it anyway","T"],["D","Get the lead. I don't want it to turn into something","F"],["E","Fix it fast and throw in a \"sorry about that\" even if it wasn't us","F","Customer warmth"],["F","Fix it, then quietly check the ticket so we know what actually happened","T","Precision"]]],["Q22","TF","A coach or teacher corrects you in front of everyone. You:",[["A","Nod, fix it, move on","T","Coachable"],["B","Fix it, but it bugs me for the rest of the day","F",null,"Takes it personally"],["C","Ask a question so I actually get it right","T","Coachable"],["D","Feel embarrassed, but appreciate that they cared enough","F","Coachable"],["E","Say \"my bad\" out loud so it's not a thing","F","Ownership"],["F","Fix it, then later ask what they'd want me to do differently next time","T","Initiative"]]],["Q23","TF","A regular tips you $5. Your coworker made most of the order. You:",[["A","Split it. They did the work","T","Ownership"],["B","Hand it over. They earned it, and it means more to them","F","Team-first"],["C","Ask what the store policy is and follow that","T","Follow-through"],["D","Put it in the shared jar","F","Team-first"],["E","Keep it this time, hand over the next one. It evens out","T"],["F","Tell them the regular tipped because of their order, and let them have it","F","Ownership"]]],["Q24","TF","The group chat is dragging someone you're friends with. You:",[["A","Say \"not cool\" in the chat","T","Ownership"],["B","Message your friend privately to check on them","F","Team-first"],["C","Leave the chat","F",null,"Avoids hard conversations"],["D","Ask what the actual issue is. Maybe there's something real","T"],["E","Say something nice about them in the chat and move on","F","Composure"],["F","Message whoever started it privately and tell them to knock it off","T","Initiative"]]],["Q25","JP","You're closing. How does the last hour go?",[["A","Checklist in order, every box, done five minutes early","J","Follow-through"],["B","I know what needs doing. I do it in whatever order makes sense","P"],["C","I start early so there's slack if something comes up","J","Initiative"],["D","It hits me at 9:45 and I power through","P",null,"Rushes details"],["E","Split the list with whoever's closing with me and check each other's","J","Team-first"],["F","Knock out the big stuff first and clean as I go","P","Initiative"]]],["Q26","JP","Big test in a week. You:",[["A","Make a study plan and stick to it","J","Follow-through"],["B","Study hard the two nights before. Pressure works for me","P"],["C","Go over notes a little each day","J"],["D","Depends on the class and how I'm feeling","P"],["E","Study with a group so I actually show up","P","Team-first"],["F","Make flashcards the first night and run them every day","J","Precision"]]],["Q27","JP","The schedule just came out and your Saturday changed. You:",[["A","Check it right away and confirm or flag it","J","Follow-through"],["B","Look when I get to it","P"],["C","Keep my week flexible anyway, so changes don't rattle me","P","Composure"],["D","Text the manager right away if it conflicts","J","Ownership"],["E","Put every shift in my phone calendar the minute it posts","J","Precision"],["F","Shrug. I'll trade if I need to, someone always wants hours","P"]]],["Q28","JP","A friend is 20 minutes late picking you up, no text. You:",[["A","Already annoyed. A text takes two seconds","J"],["B","Figure something came up; text \"all good?\"","P","Composure"],["C","Have a backup plan ready by minute ten","J","Initiative"],["D","Not a big deal, I was running late too","P"],["E","Text \"ETA?\" at minute five and go from there","J","Composure"],["F","Start walking. I'll meet them halfway","P","Initiative"]]],["Q29","JP","Mid-rush, the lead changes the plan: you're moving from sandwich to headset. You:",[["A","Need a second to reset, then I'm good","J"],["B","Love it. Switching keeps me sharp","P","Composure"],["C","Ask if someone can take my half-finished order first","J","Follow-through"],["D","Already have the headset on","P"],["E","Tell whoever's taking over exactly where I left off","J","Precision"],["F","Go, and sort out the sandwich station when I'm back","P",null,"Rushes details"]]],["Q30","JP","Your room, your car, or your bag is usually:",[["A","Organized. I know where everything is","J"],["B","Organized chaos. I know where everything is","P"],["C","Cleaned on a schedule","J"],["D","Cleaned when I can't find my keys","P"],["E","Clean on the outside, chaos in the drawers","P"],["F","Labeled. Yes, actually labeled","J","Precision"]]],["Q31","JP","You're asked to cover a shift the night before a test. You:",[["A","Say no. I planned to study, and that stays","J","Follow-through"],["B","Say yes if it's short. I'll make it work","P","Team-first"],["C","Say no, but offer a different day","J","Team-first"],["D","Say yes and figure out the studying after","P"],["E","Say yes if I can study on break. I'll make both happen","P","Initiative"],["F","Say no, and say why. A test is a commitment too","J","Ownership"]]],["Q32","JP","You've got a free day with nothing planned. You:",[["A","Make a plan by 10am","J"],["B","Love it. See where the day goes","P"],["C","Knock out the things I've been putting off","J","Initiative"],["D","Say yes to whatever anyone invites me to","P"],["E","Sleep in, then see who's around","P"],["F","Pick one thing I've wanted to do and actually do it","J","Follow-through"]]]];
+const QUIZ=[...RAPID.map(q=>({id:q[0],part:"rapid",prompt:q[1],opts:q[2]})),...FUNNY.map(q=>({id:q[0],part:"funny",prompt:q[1],opts:q[2]})),...TEST.map(q=>({id:q[0],part:q[1],prompt:q[2],opts:q[3]}))];
+const PART_LABEL={rapid:"Rapid-fire · tap one, don't think",funny:"Funny round · no wrong answers",EI:"Work style 1 of 4",SN:"Work style 2 of 4",TF:"Work style 3 of 4",JP:"Work style 4 of 4"};
+const PAIRS=["EI","SN","TF","JP"];
+const STRENGTHS=["Ownership","Composure","Initiative","Follow-through","Team-first","Coachable","Precision","Customer warmth"];
+const GROWTH=["Waits to be told","Takes it personally","Avoids hard conversations","Rushes details","Lets it slide","Goes it alone"];
+const NICK={ESTJ:"The Opener",ISTJ:"The Closer",ENFP:"The Regulars' Favorite",INTP:"The Fixer",ESFJ:"The Host",ISFJ:"The Steady Hand",ESTP:"The Floater",INFP:"The Listener",ENTJ:"The Shift Lead",INTJ:"The Planner",ENTP:"The Problem Solver",INFJ:"The Quiet Anchor",ESFP:"The Spark",ISFP:"The Craftsperson",ENFJ:"The Coach",ISTP:"The Mechanic"};
+const STFIT={"Drive-thru headset":["E","P","T"],"Front counter":["E","F","S"],"Sandwich and oven":["I","S","J"],"Beverage":["I","S"],"Finisher and baker":["I","S","J"],"Floater":["E","N","P"],"Shift lead":["T","J","N"]};
+const LINES={E:"I recharge around people",I:"I recharge on my own",S:"show me the steps and I've got it",N:"give me the why and I'll adapt",T:"just tell me straight",F:"tell me what's working first",J:"I like a plan and a checklist",P:"I'm good when the plan changes"};
+function pick(q,a){const v=a[q.id];if(!v)return null;if(v.startsWith("text:"))return{text:v.slice(5),flag:"text"};const o=q.opts.find(x=>x[0]===v);return o?{key:o[0],text:o[1],letter:o[2],strength:o[3],growth:o[4],flag:o[5]}:null}
+function tally(qs,a){const t={E:0,I:0,S:0,N:0,T:0,F:0,J:0,P:0};qs.forEach(q=>{const o=pick(q,a);if(o&&o.letter)t[o.letter]++});return t}
+function possible(){const c=Object.fromEntries(STRENGTHS.map(s=>[s,0]));QUIZ.filter(q=>q.part.length===2).forEach(q=>{const seen=new Set();q.opts.forEach(o=>{if(o[3])seen.add(o[3])});seen.forEach(s=>c[s]++)});return c}
+function scoreQuiz(a,selfType){
+  const test=QUIZ.filter(q=>q.part.length===2),rapid=QUIZ.filter(q=>q.part==="rapid"),funny=QUIZ.filter(q=>q.part==="funny");
+  const T=tally(test,a),R=tally(rapid,a),Fn=tally(funny,a);const prefs={};let type="";
+  PAIRS.forEach((pair,i)=>{const[x,y]=pair.split("");let letter,count,via="test";
+    if(T[x]!==T[y]){letter=T[x]>T[y]?x:y;count=Math.max(T[x],T[y])}else{count=T[x];if(R[x]!==R[y]){letter=R[x]>R[y]?x:y;via="rapid"}else if(Fn[x]!==Fn[y]){letter=Fn[x]>Fn[y]?x:y;via="funny"}else{const s=(selfType||"").toUpperCase()[i];letter=(s===x||s===y)?s:"X";via=letter==="X"?"open":"self"}}
+    prefs[pair]={letter,count,of:8,via};type+=letter});
+  const poss=possible(),picks=Object.fromEntries(STRENGTHS.map(s=>[s,0])),gp=Object.fromEntries(GROWTH.map(g=>[g,0]));
+  test.forEach(q=>{const o=pick(q,a);if(o&&o.strength)picks[o.strength]++;if(o&&o.growth)gp[o.growth]++});
+  const strengths=STRENGTHS.map(s=>({s,picks:picks[s],possible:poss[s],share:poss[s]?picks[s]/poss[s]:0})).sort((p,q)=>q.share-p.share||q.picks-p.picks);
+  const extras={funFacts:{},shiftLean:null};QUIZ.forEach(q=>{const o=pick(q,a);if(!o)return;if(o.flag==="opener"||o.flag==="closer")extras.shiftLean=o.flag;if(o.flag==="fun"||o.flag==="text")extras.funFacts[q.id]=o.text});
+  return{type,prefs,strengths,growth:GROWTH.filter(g=>gp[g]>=2),extras,publicStrengths:strengths.filter(x=>x.picks>=2).slice(0,3).map(x=>x.s)};
+}
+const stationFit=type=>Object.entries(STFIT).map(([name,L])=>({name,fit:L.filter(l=>type.includes(l)).length/L.length})).sort((a,b)=>b.fit-a.fit);
+
+// ============ PART 2: STATION CHECK-IN ============
+const STATIONS=[["Drive-thru headset",14],["Drive-thru window and register",14],["Front counter and register",14],["Hot coffee and iced drinks",14],["Espresso",14],["Frozen drinks",14],["Sandwich and oven",14],["Ice cream scooping and sundaes",14],["Ice cream blended drinks",14],["Cakes: selling, writing",14],["Dishes and the three-comp sink",14],["Lobby, bathrooms, floors",14],["Restock and truck day",14],["Opening",16],["Closing",16],["Bake: pull, glaze, oven, frost, bake sheet",16]];
+const A1=["Haven't learned it","Learning it","Can do it with someone nearby","Can do it alone","Could teach it"];
+const A2=["Favorite","Fine","Would rather not","Haven't worked it enough to know"];
+const A3=["Yes, now","I want to get there","No thanks"];
+const CROWS=[["Headset and drive-thru",["Take an order","Streamlined order taking","Use the timer","Suggestive sell","Fix a wrong order at the window","Expedite (flex)"]],["Register and window",["Cash in and out","Ring in drinks, bakery, sandwiches, ice cream","Save, retrieve, cancel orders","Collect payment","Gift cards","Mobile and delivery orders","Bakery case merchandising","What needs a lead (refunds, voids)"]],["Drinks",["Hot coffee and boxed coffee","Iced coffee and cold brew","Iced tea, lemonades, refreshers, zero-sugar","The tap system","Iced espresso","Hot espresso","Chai and matcha","Frozen drinks","Brew iced coffee and iced tea","Prep cold brew","Dump times","Expedite from the drink side (flex)"]],["Sandwich",["Sandwiches","Wraps","Snacks and sides","Hot holding","Prep and thaw","Station setup","The oven","Build order","Label a prepped item"]],["Ice cream",["Scoop and portion","Sundaes","Banana splits","Blended drinks","Take a cake order","Write on a cake","Restock the ice creams"]],["Bake",["Pull","Glaze","Use the oven","Frost","Make the bake sheet"]],["Cleaning",["The milk machine","The espresso machine","The tap system","The drains","The brewer and grinder","The sugar dispenser","The blender","The oven and toaster","The sandwich station"]],["Opening",["The open checklist","Brew-up","Case setup","Drawer count"]],["Closing",["The close checklist","Breakdown","Counts","What gets logged"]]];
+const C3=["Know it","Kind of","Don't know"];
+const D=[["d1","What is the expediter position?",true],["d2","What's our call-in rule?",true],["d3","What's one thing you can do on your station to bring our drive-thru and lobby times down?",false],["d4","What is SOS?",true],["d5","When is your quarterly review, and what's expected of you at it?",true]];
+const F_ALL=[["f1","Do you know our drive-thru time and lobby time targets?"],["f2","Do you know what labor percentage is and why it matters to your hours?"],["f3","Do you know how to properly sequence an order when you're making it?"],["f4","Is your availability in the app correct right now?","avail"],["f5","Do you know who to go to about anything you think needs to change, big or small?"],["f6","Do you know where questions go between shifts?"]];
+const F_ADULT=[["f7","Do you know how to count a till in and out?"],["f8","Do you know how the safe count works?"],["f9","Do you know how a deposit is prepared?"],["f10","Do you know what the red book is and what goes in it?"],["f11","Do you know what a travel path is and how often it happens?"],["f12","Do you know when the weekly meeting is and what it's for?"],["f13","Do you know the store's goal numbers?"],["f14","Do you know how to enter waste?"],["f15","Do you know the fundamentals of bake?"],["f16","Do you know what your roadmap looks like and what you need to do for a raise?"]];
+const F_MINOR=[["f17","Do you know the most hours you can work in a week, and the latest you can work on a school night?"]];
+const F_LEAD=[["f18","Set an example. You're paid more to lead and motivate your team."],["f19","Know the proper procedures and enforce them. It's your job."],["f20","Work as hard on tasks as you expect your team to."],["f21","Attend the weekly meeting and communicate expectations."]];
+const F3=["Yes","Kind of","No, teach me"];
+const MEETING="Starting next week, we're doing a weekly team meeting on Zoom, Tuesdays at 7:30pm, about 20 minutes. Shift leads and managers: you're required to be there. Everyone else, adults and minors: you're encouraged to come, and I'd like you to. It's for better communication as a team, and it gives us a chance to tackle one problem at a time instead of all of them at once. Questions? Message me on the group chat.";
+
+function buildSteps(role,age){
+  const steps=[];const st=STATIONS.filter(([n,min])=>age>=min);
+  st.forEach(([n])=>{steps.push({id:"a1:"+n,part:"Stations",prompt:`Where are you on ${n}?`,kind:"opts",opts:A1,station:n});steps.push({id:"a2:"+n,part:"Stations",prompt:`How do you feel about ${n}?`,kind:"opts",opts:A2,station:n});steps.push({id:"a3:"+n,part:"Stations",prompt:`Would you be comfortable teaching ${n} to a new crew member?`,kind:"opts",opts:A3,station:n,only:a=>["Can do it alone","Could teach it"].includes(a["a1:"+n])});steps.push({id:"ac:"+n,part:"Stations",prompt:`Anything about ${n} you want me to know?`,kind:"box",optional:true,station:n})});
+  steps.push({id:"b4",part:"What you want",prompt:"Pick up to three stations or tasks you want to learn next, in order.",kind:"multi",opts:st.map(s=>s[0]),max:3});
+  steps.push({id:"b5",part:"What you want",prompt:"Is there anything you've been asked to do that you were never trained on?",kind:"box",optional:true});
+  steps.push({id:"b6",part:"What you want",prompt:"Is there anything you do regularly that you're not sure you're doing right?",kind:"box",optional:true});
+  steps.push({id:"b7",part:"What you want",prompt:"If someone trained you on one thing this week, what should it be?",kind:"box",optional:true});
+  CROWS.forEach(([n,tasks])=>{if((n==="Bake"||n==="Opening"||n==="Closing")&&age<16)return;steps.push({id:"c:"+n,part:"Tell me what you know",prompt:`Out of these ${n.toLowerCase()} tasks, what do you know?`,kind:"tasks",tasks,opts:C3})});
+  D.forEach(([id,p,na])=>steps.push({id,part:"Quick checks",prompt:p,kind:"typed",na}));
+  steps.push({id:"e16",part:"Favorites",prompt:"What station is your favorite?",kind:"opts",opts:st.map(s=>s[0])});
+  steps.push({id:"e17",part:"Favorites",prompt:"What station is your least favorite?",kind:"opts",opts:st.map(s=>s[0])});
+  steps.push({id:"e18",part:"Favorites",prompt:"Dream shift lineup: pick up to three people you work best with.",kind:"multi",opts:["Dee","Marcus","Lou","Tasha","Jordan","Sam","Riley","Maya","Theo"],max:3,optional:true});
+  F_ALL.forEach(([id,p,k])=>steps.push({id,part:"What you should know",prompt:p,kind:"opts",opts:k==="avail"?["Yes","I need to update it"]:F3}));
+  if(age>=16)F_ADULT.forEach(([id,p])=>steps.push({id,part:"What you should know",prompt:p,kind:"opts",opts:F3}));
+  if(age<18)F_MINOR.forEach(([id,p])=>steps.push({id,part:"What you should know",prompt:p,kind:"opts",opts:F3}));
+  if(role==="lead")F_LEAD.forEach(([id,p])=>steps.push({id,part:"Lead expectations",prompt:p,kind:"opts",opts:["Got it"]}));
+  steps.push({id:"g40",part:"Comments",prompt:"Anything else you want me to know?",kind:"box",optional:true,hint:"How the last two weeks went, a rough shift, something that worked."});
+  steps.push({id:"g41",part:"Comments",prompt:"Is there something you'd rather say here than in person?",kind:"box",optional:true});
+  steps.push({id:"h0",part:"Weekly team meeting",prompt:MEETING,kind:"quote"});
+  steps.push({id:"h42",part:"Weekly team meeting",prompt:"Can you make this week's meeting?",kind:"opts",opts:role==="lead"?["I'll be there"]:["Yes","I'll try","No, and here's why"]});
+  steps.push({id:"h43",part:"Weekly team meeting",prompt:"What's one problem you'd want us to tackle first?",kind:"box",optional:true});
+  steps.push({id:"h44",part:"Weekly team meeting",prompt:"Anything you'd want brought up without your name on it?",kind:"box",optional:true});
+  return steps;
+}
+
+// ============ RESULTS CODE: how a submission travels without an account ============
+// The crew member copies a text block; it has a readable summary and a code line. The manager pastes the code into the manager tab.
+const b64e=s=>btoa(unescape(encodeURIComponent(s))),b64d=s=>decodeURIComponent(escape(atob(s)));
+function encodeSubmission(s){
+  const q=QUIZ.map(x=>{const v=s.qa[x.id];if(!v)return"-";return v.startsWith("text:")?"T":v}).join("");
+  const t={};QUIZ.forEach(x=>{const v=s.qa[x.id];if(v&&v.startsWith("text:"))t[x.id]=v.slice(5)});
+  const steps=buildSteps(s.role,s.age);
+  const c=steps.map(st=>{const v=s.ca[st.id];if(v===undefined||v===null)return"";if(st.kind==="opts")return st.opts.indexOf(v);if(st.kind==="multi")return (v||[]).map(x=>st.opts.indexOf(x)).filter(i=>i>=0);if(st.kind==="tasks")return st.tasks.map(tk=>{const i=st.opts.indexOf((v||{})[tk]);return i<0?"-":String(i)}).join("");if(st.kind==="quote")return"";return String(v)});
+  return "CHECKIN1:"+b64e(JSON.stringify({n:s.name,r:s.role,g:s.age,s:s.self,d:new Date().toISOString().slice(0,10),q,t,c}));
+}
+function decodeSubmission(text){
+  const m=String(text).match(/CHECKIN1:([A-Za-z0-9+/=]+)/);if(!m)throw new Error("No code found. Paste the whole message; the line that starts with CHECKIN1: is what matters.");
+  const o=JSON.parse(b64d(m[1]));const qa={};QUIZ.forEach((x,i)=>{const ch=o.q[i];if(!ch||ch==="-")return;qa[x.id]=ch==="T"?"text:"+(o.t[x.id]||""):ch});
+  const steps=buildSteps(o.r,o.g);const ca={};steps.forEach((st,i)=>{const v=o.c[i];if(v===""||v===undefined)return;if(st.kind==="opts")ca[st.id]=st.opts[v];else if(st.kind==="multi")ca[st.id]=(v||[]).map(j=>st.opts[j]).filter(Boolean);else if(st.kind==="tasks"){const r={};st.tasks.forEach((tk,j)=>{const d=v[j];if(d&&d!=="-")r[tk]=st.opts[parseInt(d,10)]});ca[st.id]=r}else ca[st.id]=v});
+  return{name:o.n||"Someone",role:o.r,age:o.g,self:o.s||"",submitted:o.d,minutes:null,confirmed:null,qa,ca};
+}
+function resultsText(s){
+  const r=scoreQuiz(s.qa,s.self);let type=r.type;PAIRS.forEach((p,i)=>{if(r.prefs[p].letter==="X"&&s.chosen&&s.chosen[p])type=type.slice(0,i)+s.chosen[p]+type.slice(i+1)});
+  const need=needList(s.ca,s.role,s.age);
+  const lines=[`${s.name||"Crew member"} · check-in · ${new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"})}`,`Work style: ${type} ${NICK[type]||""}`,`Strengths: ${r.publicStrengths.join(", ")||"none yet"}`,`Favorite: ${s.ca.e16||"—"} · Least: ${s.ca.e17||"—"}`,`Wants to learn: ${(s.ca.b4||[]).join(", ")||"—"}`,`Still needs: ${need.slice(0,5).map(x=>x.t).join("; ")||"nothing"}${need.length>5?` (+${need.length-5})`:""}`,`Meeting: ${s.ca.h42||"—"}${s.ca.h43?` · Problem: ${s.ca.h43}`:""}`,"","Code for the manager (don't edit):",encodeSubmission(s)];
+  return lines.join("\n");
+}
+
+// ============ SAMPLE SUBMISSION (manager view) ============
+const SAMPLE_QUIZ={};(function(){const want="ENFP";TEST.forEach(q=>{const L=want[PAIRS.indexOf(q[1])];const os=q[3].filter(o=>o[2]===L);SAMPLE_QUIZ[q[0]]=os[(q[0].length+q[2].length)%os.length][0]});["Q3","Q6","Q11","Q14","Q19","Q22","Q27","Q30"].forEach((id,i)=>{const q=TEST.find(t=>t[0]===id);const other=q[3].filter(o=>o[2]!==want[PAIRS.indexOf(q[1])]);SAMPLE_QUIZ[id]=other[i%other.length][0]});SAMPLE_QUIZ.Q19="D";SAMPLE_QUIZ.Q22="B";SAMPLE_QUIZ.Q2="A";SAMPLE_QUIZ.Q4="E";SAMPLE_QUIZ.Q21="B";Object.assign(SAMPLE_QUIZ,{W1:"A",W2:"A",W3:"B",W4:"B",W5:"B",W6:"B",W7:"B",W8:"B",W9:"B",W10:"A",F1:"text:Iced caramel latte, extra shot",F2:"A",F3:"A",F4:"text:Anything with a drum intro",F5:"D",F6:"E",F7:"F"})})();
+const SAMPLE_PERSON={name:"Jordan",role:"crew",age:18,tier:"College",submitted:"Nov 23, 2026, 9:14pm",minutes:11,confirmed:{"Drive-thru headset":3,"Drive-thru window and register":3,"Front counter and register":3,"Hot coffee and iced drinks":3,"Espresso":1,"Frozen drinks":3,"Sandwich and oven":1,"Ice cream scooping and sundaes":3,"Ice cream blended drinks":2,"Cakes: selling, writing":0,"Dishes and the three-comp sink":3,"Lobby, bathrooms, floors":3,"Restock and truck day":2,"Opening":3,"Closing":2}};
+const SAMPLE_CHECKIN={
+ "a1:Drive-thru headset":"Could teach it","a2:Drive-thru headset":"Favorite","a3:Drive-thru headset":"Yes, now","ac:Drive-thru headset":"The timer resets wrong when we switch headsets mid-shift. Marcus knows.",
+ "a1:Drive-thru window and register":"Can do it alone","a2:Drive-thru window and register":"Fine","a3:Drive-thru window and register":"I want to get there",
+ "a1:Front counter and register":"Can do it alone","a2:Front counter and register":"Fine","a3:Front counter and register":"I want to get there",
+ "a1:Hot coffee and iced drinks":"Can do it alone","a2:Hot coffee and iced drinks":"Fine","a3:Hot coffee and iced drinks":"No thanks",
+ "a1:Espresso":"Can do it alone","a2:Espresso":"Fine","a3:Espresso":"No thanks","ac:Espresso":"I'm fine on iced, hot lattes I still eyeball the milk.",
+ "a1:Frozen drinks":"Can do it alone","a2:Frozen drinks":"Fine","a3:Frozen drinks":"No thanks",
+ "a1:Sandwich and oven":"Learning it","a2:Sandwich and oven":"Would rather not","ac:Sandwich and oven":"I've only done it twice, both on a Saturday rush.",
+ "a1:Ice cream scooping and sundaes":"Can do it alone","a2:Ice cream scooping and sundaes":"Fine","a3:Ice cream scooping and sundaes":"No thanks",
+ "a1:Ice cream blended drinks":"Can do it with someone nearby","a2:Ice cream blended drinks":"Fine",
+ "a1:Cakes: selling, writing":"Haven't learned it","a2:Cakes: selling, writing":"Haven't worked it enough to know",
+ "a1:Dishes and the three-comp sink":"Can do it alone","a2:Dishes and the three-comp sink":"Fine","a3:Dishes and the three-comp sink":"No thanks",
+ "a1:Lobby, bathrooms, floors":"Can do it alone","a2:Lobby, bathrooms, floors":"Would rather not","a3:Lobby, bathrooms, floors":"No thanks","ac:Lobby, bathrooms, floors":"The lobby mop is shredded.",
+ "a1:Restock and truck day":"Can do it alone","a2:Restock and truck day":"Fine","a3:Restock and truck day":"No thanks",
+ "a1:Opening":"Can do it alone","a2:Opening":"Fine","a3:Opening":"I want to get there",
+ "a1:Closing":"Can do it with someone nearby","a2:Closing":"Fine",
+ b4:["Espresso","Cakes: selling, writing","Closing"],b5:"Truck day. I've just been handed boxes, nobody showed me the temps or the invoice.",b6:"Cold brew prep timing. I think I'm steeping it too long.",b7:"Hot espresso drinks so I'm not stuck on headset every shift.",
+ "c:Headset and drive-thru":{"Take an order":"Know it","Streamlined order taking":"Know it","Use the timer":"Know it","Suggestive sell":"Know it","Fix a wrong order at the window":"Know it","Expedite (flex)":"Know it"},
+ "c:Register and window":{"Cash in and out":"Know it","Ring in drinks, bakery, sandwiches, ice cream":"Know it","Save, retrieve, cancel orders":"Know it","Collect payment":"Know it","Gift cards":"Kind of","Mobile and delivery orders":"Know it","Bakery case merchandising":"Kind of","What needs a lead (refunds, voids)":"Know it"},
+ "c:Drinks":{"Hot coffee and boxed coffee":"Know it","Iced coffee and cold brew":"Know it","Iced tea, lemonades, refreshers, zero-sugar":"Know it","The tap system":"Don't know","Iced espresso":"Know it","Hot espresso":"Kind of","Chai and matcha":"Kind of","Frozen drinks":"Know it","Brew iced coffee and iced tea":"Know it","Prep cold brew":"Kind of","Dump times":"Know it","Expedite from the drink side (flex)":"Know it"},
+ "c:Sandwich":{"Sandwiches":"Kind of","Wraps":"Kind of","Snacks and sides":"Know it","Hot holding":"Know it","Prep and thaw":"Don't know","Station setup":"Don't know","The oven":"Don't know","Build order":"Don't know","Label a prepped item":"Know it"},
+ "c:Ice cream":{"Scoop and portion":"Know it","Sundaes":"Know it","Banana splits":"Know it","Blended drinks":"Kind of","Take a cake order":"Don't know","Write on a cake":"Don't know","Restock the ice creams":"Know it"},
+ "c:Cleaning":{"The milk machine":"Kind of","The espresso machine":"Don't know","The tap system":"Don't know","The drains":"Don't know","The brewer and grinder":"Know it","The sugar dispenser":"Know it","The blender":"Know it","The oven and toaster":"Kind of","The sandwich station":"Kind of"},
+ "c:Opening":{"The open checklist":"Know it","Brew-up":"Know it","Case setup":"Know it","Drawer count":"Know it"},
+ "c:Closing":{"The close checklist":"Know it","Breakdown":"Know it","Counts":"Kind of","What gets logged":"Kind of"},
+ d1:"The person between the screen and the window who calls orders and bags them so the headset person can keep taking orders.",d2:"Call the store 2 hours before, texting doesn't count.",d3:"Have the next car's order started before they reach the window, and don't let the headset go quiet.",d4:"Speed of service, the time from the speaker to the window.",d5:"N/A",
+ e16:"Drive-thru headset",e17:"Sandwich and oven",e18:["Tasha","Dee","Riley"],
+ f1:"Kind of",f2:"No, teach me",f3:"Yes",f4:"I need to update it",f5:"Yes",f6:"Yes",f7:"Yes",f8:"No, teach me",f9:"No, teach me",f10:"Kind of",f11:"Kind of",f12:"No, teach me",f13:"No, teach me",f14:"Yes",f15:"No, teach me",f16:"Kind of",
+ g40:"The Saturday open with Dee and Theo was the smoothest we've had. Theo's going to be good on headset.",g41:"",
+ h42:"I'll try",h43:"Mobile orders piling up during the 7:30 rush with nobody assigned to them.",h44:"",
+};
+const STORE_ANSWERS={d1:"Flex position between the screen and the window: reads the screen, calls orders, bags, hands off. (sample)",d2:"Call the store at least 2 hours before your shift. A message isn't a call-in. (sample)",d3:"Any station-specific answer counts.",d4:"Speed of service: time from the order point to hand-off. (sample)",d5:"Every three months; the roadmap in the app says what's expected. (sample)"};
+const CREW=[
+ {name:"Dee",type:"ESTJ",role:"ASM",fav:"Hot coffee and iced drinks",least:"Lobby, bathrooms, floors",wants:["Bake: pull, glaze, oven, frost, bake sheet"],teachNow:9,wantTeach:1,rsvp:"I'll be there",problem:"Truck day lands on the morning rush twice a month.",says:0,flags:[]},
+ {name:"Marcus",type:"ISTJ",role:"Shift lead",fav:"Sandwich and oven",least:"Cakes: selling, writing",wants:["Espresso"],teachNow:7,wantTeach:1,rsvp:"I'll be there",problem:"Closers leaving the sandwich station for the opener.",says:0,flags:[]},
+ {name:"Lou",type:"ISTP",role:"Baker",fav:"Bake: pull, glaze, oven, frost, bake sheet",least:"Drive-thru headset",wants:["Opening"],teachNow:2,wantTeach:1,rsvp:"Yes",problem:"Bake sheet numbers don't match what sells on Sundays.",says:1,flags:["Never trained on: register"]},
+ {name:"Tasha",type:"ESFJ",role:"Crew",fav:"Front counter and register",least:"Sandwich and oven",wants:["Closing"],teachNow:6,wantTeach:0,rsvp:"Yes",problem:"Mobile orders during the rush.",says:0,flags:[]},
+ {name:"Jordan",type:"ENFP",role:"Crew",fav:"Drive-thru headset",least:"Sandwich and oven",wants:["Espresso","Cakes: selling, writing","Closing"],teachNow:1,wantTeach:3,rsvp:"I'll try",problem:"Mobile orders piling up during the 7:30 rush.",says:2,flags:["Availability needs update","Never trained on: truck day"]},
+ {name:"Sam",type:"ESTP",role:"Crew",fav:"Drive-thru headset",least:"Dishes and the three-comp sink",wants:["Opening"],teachNow:2,wantTeach:1,rsvp:"No, and here's why",problem:"",says:3,flags:["Not sure doing right: closing counts"]},
+ {name:"Riley",type:"ISFJ",role:"Crew · 17",fav:"Hot coffee and iced drinks",least:"Drive-thru headset",wants:["Espresso","Cakes: selling, writing"],teachNow:1,wantTeach:1,rsvp:"Yes",problem:"The 4pm handoff: nobody tells the closer what's low.",says:1,flags:[]},
+ {name:"Maya",type:"INFP",role:"Crew · 16",fav:"Ice cream scooping and sundaes",least:"Drive-thru window and register",wants:["Cakes: selling, writing","Espresso"],teachNow:0,wantTeach:1,rsvp:"I'll try",problem:"",says:2,flags:["Never trained on: mobile orders","Private comment"]},
+ {name:"Theo",type:"INTP",role:"Crew · 17 · training",fav:"Drive-thru headset",least:"Lobby, bathrooms, floors",wants:["Espresso","Frozen drinks"],teachNow:0,wantTeach:0,rsvp:"Yes",problem:"",says:4,flags:["Training 3 of 5"]},
+];
+
+// ============ STATE ============
+const KEY="crew-checkin-full-v1";
+let st={screen:"start",name:"",role:"crew",age:18,self:"",qi:0,qa:{},ci:0,ca:{},typed:"",chosen:{}};
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&s.qa)st={...st,...s,typed:""}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+let grades={};try{grades=JSON.parse(localStorage.getItem(KEY+"-grades")||"{}")}catch(e){}
+let replies={};try{replies=JSON.parse(localStorage.getItem(KEY+"-replies")||"{}")}catch(e){}
+const app=document.getElementById("app");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const nav=v=>`<nav aria-label="Views"><a href="#take" ${v==="take"?'aria-current="page"':""}>Take it</a><a href="#manager" ${v==="manager"?'aria-current="page"':""}>What the manager sees</a></nav>`;
+
+// ============ TAKE IT ============
+function renderTake(){
+  app.className="wrap";
+  if(st.screen==="start")return renderStart();
+  if(st.screen==="quiz")return renderQuiz();
+  if(st.screen==="checkin")return renderCheckin();
+  return renderDone();
+}
+function renderStart(){
+  const done=Object.keys(st.qa).length+Object.keys(st.ca).length;
+  const who=personFromHash();
+  if(who&&st.link!==who.slug){st.name=who.name;st.age=who.age;st.role=who.role;st.link=who.slug;save()}
+  app.innerHTML=`${nav("take")}
+    <div style="display:flex;flex-direction:column;gap:6px"><p class="muted small" style="font-weight:500">Part 1 is about 8 minutes, Part 2 about 4</p><h1>${who?`Hey ${esc(st.name)}`:"Crew Check-in"}</h1>
+    <p class="muted">Two parts. First, the work style quiz: who you are on the floor. Then the station check-in: what you're comfortable with, what you want to learn, and anything you want your manager to know. Nothing here changes your hours.</p></div>
+    <div class="card"><h3>About you</h3>
+      ${who?`<p class="small">This link was made for <b>${esc(st.name)}</b>, ${st.role==="lead"?"shift lead":st.role}, ${st.age===14?"14 to 15":st.age===16?"16 to 17":"18 and over"}. <span class="muted">Not you? Ask your manager for your own link.</span></p><input type="hidden" id="nm" value="${esc(st.name)}"><input type="hidden" id="role" value="${st.role}"><input type="hidden" id="age" value="${st.age}">`:`<input type="text" id="nm" placeholder="Your first name" value="${esc(st.name)}" autocomplete="off">
+      <div class="two" style="grid-auto-rows:auto">
+        <label class="small muted">Role<select id="role"><option value="crew" ${st.role==="crew"?"selected":""}>Crew</option><option value="baker" ${st.role==="baker"?"selected":""}>Baker</option><option value="lead" ${st.role==="lead"?"selected":""}>Shift lead</option></select></label>
+        <label class="small muted">Age<select id="age"><option value="14" ${st.age===14?"selected":""}>14 to 15</option><option value="16" ${st.age===16?"selected":""}>16 to 17</option><option value="18" ${st.age===18?"selected":""}>18 and over</option></select></label>
+      </div>
+      <p class="muted small">In the app, role and age come from your profile. Here they decide which stations and questions you see.</p>`}
+      <input type="text" id="self" maxlength="4" placeholder="Already know your four letters? (optional)" value="${esc(st.self)}" autocapitalize="characters" autocomplete="off">
+      <p class="err" id="err" hidden>Four letters, one from each pair: E/I, S/N, T/F, J/P.</p>
+    </div>
+    <button class="primary" id="start">${done?`Continue`:"Start Part 1"}</button>
+    <button class="ghost" id="fill">Fill with sample answers and jump to the end</button>
+    ${done?`<button class="ghost" id="reset">Start over</button>`:""}`;
+  const readForm=()=>{st.name=document.getElementById("nm").value.trim()||"you";st.role=document.getElementById("role").value;st.age=parseInt(document.getElementById("age").value,10)};
+  document.getElementById("start").addEventListener("click",()=>{const v=document.getElementById("self").value.trim().toUpperCase();const ok=!v||/^[EI][SN][TF][JP]$/.test(v);document.getElementById("err").hidden=ok;if(!ok)return;readForm();st.self=v;st.screen=Object.keys(st.qa).length>=QUIZ.length?"checkin":"quiz";save();render()});
+  document.getElementById("fill").addEventListener("click",()=>{readForm();st.qa={...SAMPLE_QUIZ};const steps=buildSteps(st.role,st.age);st.ca={};steps.forEach(s=>{if(s.id in SAMPLE_CHECKIN)st.ca[s.id]=SAMPLE_CHECKIN[s.id];else if(s.kind==="opts")st.ca[s.id]=s.opts[1]||s.opts[0];else if(s.kind==="tasks"){const o={};s.tasks.forEach(t=>o[t]="Know it");st.ca[s.id]=o}else if(s.kind==="typed")st.ca[s.id]="N/A";else if(s.kind==="multi")st.ca[s.id]=[]});st.screen="done";save();render()});
+  const r=document.getElementById("reset");if(r)r.addEventListener("click",()=>{st={screen:"start",name:"",role:"crew",age:18,self:"",qi:0,qa:{},ci:0,ca:{},typed:"",chosen:{}};save();render()});
+}
+function renderQuiz(){
+  const q=QUIZ[st.qi],n=QUIZ.length,rapid=q.part==="rapid";
+  app.innerHTML=`${nav("take")}
+    <div class="row"><span class="muted small" style="font-weight:500">${PART_LABEL[q.part]}</span><span class="muted small">Part 1 · ${st.qi+1} / ${n}</span></div>
+    <div class="prog"><i style="width:${((st.qi+1)/n)*100}%"></i></div>${rapid?`<div class="timer"><i class="run"></i></div>`:""}
+    <h2 style="margin-top:6px">${esc(q.prompt)}</h2>
+    <div class="${rapid?"two":""}" style="display:${rapid?"grid":"flex"};flex-direction:column;gap:10px">
+      ${q.opts.map(o=>o[5]==="text"?`<div style="display:flex;flex-direction:column;gap:8px"><input type="text" id="typed" placeholder="${esc(o[1])}" value="${esc(st.typed)}" autocomplete="off"><button class="opt" id="use" hidden>Use that</button></div>`:`<button class="opt" data-k="${o[0]}">${esc(o[1])}</button>`).join("")}
+    </div>
+    <div class="row">${st.qi>0?`<button class="ghost" id="back">Back</button>`:"<span></span>"}<button class="ghost" id="quit">Save and finish later</button></div>`;
+  app.querySelectorAll("button.opt[data-k]").forEach(b=>b.addEventListener("click",()=>{st.qa[q.id]=b.dataset.k;st.typed="";if(st.qi+1<n)st.qi++;else st.screen="checkin";save();render()}));
+  const t=document.getElementById("typed");if(t){const u=document.getElementById("use");t.addEventListener("input",()=>{st.typed=t.value;u.hidden=!t.value.trim()});u.hidden=!t.value.trim();u.addEventListener("click",()=>{st.qa[q.id]="text:"+t.value.trim();st.typed="";if(st.qi+1<n)st.qi++;else st.screen="checkin";save();render()})}
+  const b=document.getElementById("back");if(b)b.addEventListener("click",()=>{st.qi--;save();render()});
+  document.getElementById("quit").addEventListener("click",()=>{st.screen="start";save();render()});
+  window.scrollTo({top:0});
+}
+function renderCheckin(){
+  const steps=buildSteps(st.role,st.age).filter(s=>!s.only||s.only(st.ca));
+  if(st.ci>=steps.length){st.screen="done";save();return render()}
+  const s=steps[st.ci],n=steps.length;const cur=st.ca[s.id];
+  const next=()=>{if(st.ci+1<n)st.ci++;else st.screen="done";st.typed="";save();render()};
+  let body="";
+  if(s.kind==="opts")body=`<div style="display:flex;flex-direction:column;gap:10px">${s.opts.map(o=>`<button class="opt ${cur===o?"on":""}" data-o="${esc(o)}">${esc(o)}</button>`).join("")}</div>`;
+  else if(s.kind==="multi")body=`<div class="chips" id="multi">${s.opts.map(o=>`<button class="sm ${(cur||[]).includes(o)?"on":""}" data-o="${esc(o)}">${esc(o)}</button>`).join("")}</div><p class="muted small">Up to ${s.max}. Tap in the order you want them.</p><button class="primary" id="go">${s.optional?"Next":"Done picking"}</button>`;
+  else if(s.kind==="box")body=`<textarea id="box" placeholder="${esc(s.hint||"Type here, or skip")}">${esc(cur||"")}</textarea><button class="primary" id="go">${s.optional?"Next":"Save"}</button>`;
+  else if(s.kind==="typed")body=`<textarea id="box" placeholder="${s.na?"Type it, or N/A":"Type it"}">${esc(cur||"")}</textarea><div class="row"><button class="primary" id="go" style="flex:1">Save</button>${s.na?`<button id="na">N/A, teach me</button>`:""}</div>`;
+  else if(s.kind==="tasks")body=`<div style="display:flex;flex-direction:column;gap:10px">${s.tasks.map(t=>`<div><div class="small" style="font-weight:500;margin-bottom:4px">${esc(t)}</div><div class="chips">${s.opts.map(o=>`<button class="sm ${(cur||{})[t]===o?"on":""}" data-t="${esc(t)}" data-o="${esc(o)}">${esc(o)}</button>`).join("")}</div></div>`).join("")}</div><button class="primary" id="go">Next</button><p class="err" id="err" hidden>Pick one for each task.</p>`;
+  else if(s.kind==="quote")body=`<blockquote>${esc(s.prompt)}</blockquote><button class="primary" id="go">Got it</button>`;
+  app.innerHTML=`${nav("take")}
+    <div class="row"><span class="muted small" style="font-weight:500">${esc(s.part)}${s.station?"":""}</span><span class="muted small">Part 2 · ${st.ci+1} / ${n}</span></div>
+    <div class="prog"><i style="width:${((st.ci+1)/n)*100}%"></i></div>
+    ${s.kind==="quote"?`<h2 style="margin-top:6px">The weekly team meeting</h2>`:`<h2 style="margin-top:6px">${esc(s.prompt)}</h2>`}
+    ${body}
+    <div class="row">${st.ci>0?`<button class="ghost" id="back">Back</button>`:"<span></span>"}<button class="ghost" id="quit">Save and finish later</button></div>`;
+  app.querySelectorAll("button.opt[data-o]").forEach(b=>b.addEventListener("click",()=>{st.ca[s.id]=b.dataset.o;next()}));
+  const m=document.getElementById("multi");if(m)m.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{let arr=st.ca[s.id]||[];arr=arr.includes(b.dataset.o)?arr.filter(x=>x!==b.dataset.o):arr.length<s.max?[...arr,b.dataset.o]:arr;st.ca[s.id]=arr;save();renderCheckin()}));
+  app.querySelectorAll("button.sm[data-t]").forEach(b=>b.addEventListener("click",()=>{const o={...(st.ca[s.id]||{})};o[b.dataset.t]=b.dataset.o;st.ca[s.id]=o;save();renderCheckin()}));
+  const go=document.getElementById("go");if(go)go.addEventListener("click",()=>{const box=document.getElementById("box");if(box)st.ca[s.id]=box.value.trim();if(s.kind==="tasks"){const o=st.ca[s.id]||{};if(s.tasks.some(t=>!o[t])){document.getElementById("err").hidden=false;return}}if(s.kind==="typed"&&!st.ca[s.id]){st.ca[s.id]="";}next()});
+  const na=document.getElementById("na");if(na)na.addEventListener("click",()=>{st.ca[s.id]="N/A";next()});
+  const b=document.getElementById("back");if(b)b.addEventListener("click",()=>{st.ci--;save();render()});
+  document.getElementById("quit").addEventListener("click",()=>{st.screen="start";save();render()});
+  window.scrollTo({top:0});
+}
+function needList(ca,role,age){
+  const steps=buildSteps(role,age);const out=[];
+  steps.filter(s=>s.id.startsWith("a1:")).forEach(s=>{const v=ca[s.id];if(v==="Haven't learned it"||v==="Learning it")out.push({t:s.station,why:v})});
+  steps.filter(s=>s.kind==="tasks").forEach(s=>{const o=ca[s.id]||{};Object.entries(o).forEach(([t,v])=>{if(v==="Don't know")out.push({t:`${t} (${s.id.slice(2)})`,why:"don't know"})})});
+  D.forEach(([id,p])=>{if((ca[id]||"").trim().toUpperCase()==="N/A")out.push({t:p,why:"N/A"})});
+  [...F_ALL,...F_ADULT,...F_MINOR].forEach(([id,p])=>{const v=ca[id];if(v==="No, teach me"||v==="Kind of")out.push({t:p.replace(/^Do you know /,"").replace(/\?$/,""),why:v.toLowerCase()})});
+  return out;
+}
+function renderDone(){
+  const r=scoreQuiz(st.qa,st.self);let type=r.type;PAIRS.forEach((p,i)=>{if(r.prefs[p].letter==="X"&&st.chosen[p])type=type.slice(0,i)+st.chosen[p]+type.slice(i+1)});
+  const open=PAIRS.filter(p=>r.prefs[p].letter==="X");const need=needList(st.ca,st.role,st.age);const wants=st.ca.b4||[];
+  app.innerHTML=`${nav("take")}
+    <div style="display:flex;flex-direction:column;gap:6px"><p class="muted small" style="font-weight:500">Done. Here's what you told us, ${esc(st.name||"you")}.</p><div class="type">${type}</div><h2 class="muted" style="font-weight:500">${esc(NICK[type]||"Still deciding")}</h2></div>
+    ${open.length?`<div class="card" style="border-color:var(--accent)"><h3>One's a coin flip</h3>${open.map(p=>`<div class="two" style="grid-auto-rows:auto">${p.split("").map(L=>`<button data-pair="${p}" data-letter="${L}" style="min-height:56px;font-size:15px">${L} · ${esc(LINES[L])}</button>`).join("")}</div>`).join("")}</div>`:""}
+    <div class="card"><div class="chips">${PAIRS.map((p,i)=>`<span class="chip c-acc">${type[i]} ${Math.round(100*r.prefs[p].count/8)}%</span>`).join("")}</div><div class="chips">${r.publicStrengths.map(s=>`<span class="chip c-blue">${s}</span>`).join("")}</div><p class="small muted">Working with me: ${esc(PAIRS.map((p,i)=>LINES[type[i]]).filter(Boolean).join("; "))}.</p></div>
+    <div class="card"><h3>Still need to learn</h3><p class="muted small">Built from your own answers. The top one is what to ask for first.</p>${need.length?`<ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px">${need.slice(0,12).map(x=>`<li>${esc(x.t)} <span class="muted">· ${esc(x.why)}</span></li>`).join("")}${need.length>12?`<li class="muted">${need.length-12} more</li>`:""}</ol>`:`<p class="small">Nothing. Everything you work, you said you can do.</p>`}</div>
+    ${wants.length?`<div class="card"><h3>You asked to learn</h3><ol style="margin:0;padding-left:20px;font-size:14px">${wants.map(w=>`<li>${esc(w)}</li>`).join("")}</ol></div>`:""}
+    <div class="card"><h3>Weekly meeting</h3><p class="small">Tuesdays 7:30pm on Zoom. You said: <b>${esc(st.ca.h42||"—")}</b>.${st.ca.h43?` Your problem to tackle: "${esc(st.ca.h43)}"`:""}</p></div>
+    ${r.growth.length?`<div class="private"><span class="small" style="font-weight:600">Only you and your manager see this</span><span class="small muted">Growth area: ${r.growth.join(", ")}.</span></div>`:""}
+    <div class="card" style="border:2px solid var(--accent)"><h2 style="text-transform:uppercase;letter-spacing:.03em;font-size:17px">To save your results, press Email to my manager</h2>
+      ${CONFIG.SHEET_URL?`<p class="muted small">One tap. It goes straight to your manager's sheet; nobody else sees it.</p><button class="primary" id="send">${st.sent?"Sent ✓ · send again":"Send to my manager"}</button><p class="small muted" id="sent" ${st.sent?"":"hidden"}>Sent. You're done.</p><p class="err" id="senderr" hidden>Couldn't send. Copy your results below and text them instead.</p><button class="ghost" id="copy">Or copy my results</button>`:`<p class="muted small">It opens your mail app with your manager's address and your results already filled in. Just hit send.</p><a class="primary" id="mail" href="#" style="display:block;text-align:center;padding:14px 16px;border-radius:12px;background:var(--accent);color:var(--accent-fg);font-weight:600;font-size:17px;text-decoration:none">Email to my manager</a><p class="small muted">Mail app didn't open? Tap below, then paste it into a text or email to your manager.</p><button id="copy" style="width:100%;text-align:center">Copy my results instead</button>`}
+      <p class="small muted" id="copied" hidden>Copied. Now paste it to your manager.</p><textarea id="out" hidden readonly style="min-height:160px;font-size:12px"></textarea></div>
+    <a href="#manager" class="ghost" style="color:var(--accent);font-weight:500">See what the manager sees from this →</a>
+    <button class="ghost" id="reset">Start over</button>`;
+  app.querySelectorAll("button[data-pair]").forEach(b=>b.addEventListener("click",()=>{st.chosen[b.dataset.pair]=b.dataset.letter;save();render()}));
+  document.getElementById("copy").addEventListener("click",async()=>{const text=resultsText(st);const out=document.getElementById("out");out.value=text;try{await navigator.clipboard.writeText(text);document.getElementById("copied").hidden=false}catch(e){out.hidden=false;document.getElementById("copied").textContent="Select all the text below and copy it.";document.getElementById("copied").hidden=false}});
+  const mail=document.getElementById("mail");if(mail){const text=resultsText(st);if(CONFIG.MANAGER_EMAIL){mail.href="mailto:"+encodeURIComponent(CONFIG.MANAGER_EMAIL)+"?subject="+encodeURIComponent(`Check-in: ${st.name||"crew"}`)+"&body="+encodeURIComponent(text)}else{mail.addEventListener("click",e=>{e.preventDefault();document.getElementById("copy").click();document.getElementById("copied").textContent="Your manager's email isn't set up in this page yet. Your results are copied; paste them into a text or email."})}}
+  const sendBtn=document.getElementById("send");if(sendBtn)sendBtn.addEventListener("click",async()=>{sendBtn.disabled=true;sendBtn.textContent="Sending…";const text=resultsText(st);const code=text.split("\n").pop();const summary=text.split("\n").slice(0,7).join("\n");try{await fetch(CONFIG.SHEET_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({name:st.name,role:st.role,age:st.age,summary,code})});st.sent=true;save();document.getElementById("sent").hidden=false;sendBtn.textContent="Sent ✓ · send again"}catch(e){document.getElementById("senderr").hidden=false;sendBtn.textContent="Send to my manager"}sendBtn.disabled=false});
+  document.getElementById("reset").addEventListener("click",()=>{st={screen:"start",name:"",role:"crew",age:18,self:"",qi:0,qa:{},ci:0,ca:{},typed:"",chosen:{}};save();render()});
+  window.scrollTo({top:0});
+}
+
+// ============ MANAGER VIEW ============
+const LV={"Haven't learned it":0,"Learning it":1,"Can do it with someone nearby":2,"Can do it alone":3,"Could teach it":4};
+const LVN=["Not started","Learning","With help","Alone","Could teach"];
+let pasted=null;try{pasted=JSON.parse(localStorage.getItem(KEY+"-pasted")||"null")}catch(e){}
+let pasteErr="",sheetErr="",inbox=[];let mkey="";try{mkey=localStorage.getItem(KEY+"-mkey")||""}catch(e){}
+async function loadSheet(){
+  sheetErr="";try{localStorage.setItem(KEY+"-mkey",mkey)}catch(e){}
+  try{const res=await fetch(CONFIG.SHEET_URL+(CONFIG.SHEET_URL.includes("?")?"&":"?")+"key="+encodeURIComponent(mkey)+"&list=1");const data=await res.json();if(data&&data.error)throw new Error("That key didn't match the one in the sheet's script.");inbox=Array.isArray(data)?data:[]}catch(e){sheetErr=e.message||"Couldn't reach the sheet."}
+  renderManager();
+}
+function renderManager(){
+  app.className="wrap wide";
+  const sample={...SAMPLE_PERSON,ca:SAMPLE_CHECKIN,qa:SAMPLE_QUIZ,self:""};
+  const p=pasted||sample,ca=p.ca,r=scoreQuiz(p.qa,p.self||"");const type=r.type;const fits=stationFit(type);
+  const confirmed=p.confirmed||{};
+  const stations=STATIONS.filter(([n,min])=>p.age>=min).map(([n])=>n);
+  const saysGap=stations.filter(n=>LV[ca["a1:"+n]]>=3&&(confirmed[n]??0)<3);
+  const need=needList(ca,p.role,p.age);
+  const flags=[];
+  if(ca.f4==="I need to update it")flags.push(["c-red","Availability needs an update",""]);
+  if(ca.b5)flags.push(["c-red","Never trained on",ca.b5]);
+  if(ca.b6)flags.push(["c-amber","Not sure they're doing it right",ca.b6]);
+  saysGap.forEach(n=>flags.push(["c-amber","Says alone, not confirmed",n]));
+  stations.filter(n=>ca["a3:"+n]==="Yes, now").forEach(n=>flags.push(["c-acc","Could teach now",n+" · watch one training shift, then flip to Can teach"]));
+  stations.filter(n=>ca["a3:"+n]==="I want to get there").forEach(n=>flags.push(["c-blue","Trainer pipeline",n]));
+  stations.filter(n=>ca["a2:"+n]==="Would rather not").forEach(n=>flags.push(["c-gray","Would rather not",n]));
+  if(ca.g41)flags.push(["c-red","Private comment","read it below"]);
+  const comments=stations.filter(n=>ca["ac:"+n]).map(n=>({id:"ac:"+n,who:n,text:ca["ac:"+n]}));
+  if(ca.g40)comments.push({id:"g40",who:"Anything else",text:ca.g40});if(ca.g41)comments.push({id:"g41",who:"Rather say here than in person",text:ca.g41});
+  const favs=CREW.reduce((m,c)=>{m[c.fav]=(m[c.fav]||0)+1;return m},{});const leasts=CREW.reduce((m,c)=>{m[c.least]=(m[c.least]||0)+1;return m},{});
+  const nobodyWants=STATIONS.map(s=>s[0]).filter(n=>!favs[n]&&(leasts[n]||0)>=1);
+  const wantCount={};CREW.forEach(c=>c.wants.forEach(w=>{wantCount[w]=(wantCount[w]||0)+1}));
+  const topWant=Object.entries(wantCount).sort((a,b)=>b[1]-a[1]);
+  const rsvp=CREW.reduce((m,c)=>{m[c.rsvp]=(m[c.rsvp]||0)+1;return m},{});
+  const agenda=[["Mobile orders during the rush",3],["Truck day timing vs the morning rush",1],["The 4pm handoff: what's low",1],["Bake sheet vs Sunday sales",1],["Closers and the sandwich station",1]];
+  app.innerHTML=`${nav("manager")}
+    ${CONFIG.SHEET_URL?`<div class="card"><h3>Submissions from the sheet</h3><div class="row"><input type="text" id="mkey" placeholder="Manager key" value="${esc(mkey)}" style="flex:1;min-height:40px;padding:8px 12px"><button class="sm" id="loadsheet">Load</button></div>
+      ${sheetErr?`<p class="err">${esc(sheetErr)}</p>`:""}
+      ${inbox.length?`<ul class="clean">${inbox.map((s,i)=>`<li><button class="ghost" data-open="${i}" style="text-align:left">${esc(s.name||"Someone")} <span class="muted">· ${esc(String(s.received).slice(0,10))} · ${esc((s.summary||"").split("\\n")[1]||"")}</span></button></li>`).join("")}</ul>`:`<p class="muted small">Nothing loaded yet. Enter your key and tap Load; the newest check-ins list here, one tap each.</p>`}</div>`:""}
+    <div class="card"><h3>Make someone's link</h3><p class="muted small">Each person gets their own link. It opens with their name, role, and age already set, so they skip straight to the questions and only see what applies to them.</p>
+      <div class="row"><input type="text" id="lk-name" placeholder="First name" style="flex:2;min-height:40px;padding:8px 12px"><select id="lk-age" style="flex:1;min-height:40px;padding:8px 12px"><option value="14">14 to 15</option><option value="16">16 to 17</option><option value="18" selected>18 and over</option></select><select id="lk-role" style="flex:1;min-height:40px;padding:8px 12px"><option value="crew">Crew</option><option value="baker">Baker</option><option value="lead">Shift lead</option></select></div>
+      <div class="row"><input type="text" id="lk-out" readonly placeholder="Their link appears here" style="flex:1;min-height:40px;padding:8px 12px;font-size:13px"><button class="sm" id="lk-copy">Copy</button></div><p class="small muted" id="lk-msg" hidden>Copied. Text it to them.</p></div>
+    <div class="card"><h3>${CONFIG.SHEET_URL?"Or paste a crew member's results":"Paste a crew member's results"}</h3><p class="muted small">When someone texts you their results, paste the whole message here. The code line turns back into their full report below.</p>
+      <textarea id="paste" placeholder="Paste the message that has the CHECKIN1: line" style="min-height:70px;font-size:13px"></textarea>
+      <div class="row"><button class="primary" id="load" style="flex:1">Show this check-in</button>${pasted?`<button id="unload">Back to the sample</button>`:""}</div>${pasteErr?`<p class="err">${esc(pasteErr)}</p>`:""}</div>
+    <div class="row"><div><p class="muted small" style="font-weight:500">${pasted?"Pasted submission":"Sample submission · what you'd see"}</p><h1>${esc(p.name)}'s check-in</h1></div><span class="muted small">Submitted ${esc(p.submitted)}${p.minutes?` · ${p.minutes} min`:""}${p.confirmed?"":" · no trainer checks on file yet"}</span></div>
+    <div class="tiles">
+      <div class="tile"><span class="muted small">Work style</span><span class="n">${type}</span><span class="small">${esc(NICK[type])}</span></div>
+      <div class="tile"><span class="muted small">Still needs to learn</span><span class="n">${need.length}</span><span class="small">items, from their own answers</span></div>
+      <div class="tile"><span class="muted small">Says alone, not confirmed</span><span class="n" style="color:var(--amber-fg)">${saysGap.length}</span><span class="small">queued for a trainer</span></div>
+      <div class="tile"><span class="muted small">Comments</span><span class="n">${comments.length}</span><span class="small">${ca.g41?"one private":"none private"}</span></div>
+      <div class="tile"><span class="muted small">Meeting</span><span class="n" style="font-size:20px">${esc(ca.h42||"—")}</span><span class="small">Tuesday 7:30</span></div>
+    </div>
+    <div class="card"><h3>Flags, in the order you'd act on them</h3><ul class="clean">${flags.map(([c,l,d])=>`<li><span class="chip ${c}">${esc(l)}</span><span class="small">${esc(d)}</span></li>`).join("")}</ul></div>
+    <div class="grid2">
+      <div class="card"><h3>Work style</h3><div class="chips">${PAIRS.map((pr,i)=>`<span class="chip c-acc">${type[i]} ${Math.round(100*r.prefs[pr].count/8)}%</span>`).join("")}</div>
+        <div class="kv"><b>Strengths</b><span>${r.publicStrengths.join(", ")}</span><b>Growth (private)</b><span>${r.growth.join(", ")||"none flagged"}</span><b>Best fit</b><span>${fits.slice(0,2).map(f=>f.name).join(", ")}</span><b>Feedback</b><span>${type[2]==="T"?"the specific thing to change, in the moment":"what's working first, then the fix"}${r.growth.includes("Takes it personally")?"; correct privately and briefly":""}</span><b>Learns</b><span>${type[1]==="S"?"step by step, then practice":"big idea first, then fills in the rest"}</span><b>Shift lean</b><span>${r.extras.shiftLean==="closer"?"night owl, closes":"early bird, opens"}</span><b>Fun facts</b><span>${Object.values(r.extras.funFacts).map(esc).join(" · ")}</span></div></div>
+      <div class="card"><h3>Wants</h3><div class="kv"><b>Learn next</b><span>${(ca.b4||[]).map((w,i)=>`${i+1}. ${esc(w)}`).join("<br>")||"—"}</span><b>Train on one thing</b><span>${esc(ca.b7||"—")}</span><b>Favorite</b><span>${esc(ca.e16||"—")}</span><b>Least favorite</b><span>${esc(ca.e17||"—")}</span><b>Works best with</b><span>${(ca.e18||[]).join(", ")||"—"} <span class="muted">(private)</span></span></div>
+        <h3 style="margin-top:6px">Teach next</h3><ol style="margin:0;padding-left:20px;font-size:13.5px;display:flex;flex-direction:column;gap:3px">${need.slice(0,8).map(x=>`<li>${esc(x.t)} <span class="muted">· ${esc(x.why)}</span></li>`).join("")}</ol></div>
+    </div>
+    <div class="card"><h3>Stations: says vs confirmed</h3><p class="muted small">Says is their tap. Confirmed is what a trainer has checked. The gap is the trainer's queue.</p><div class="scroll"><table><tr><th>Station</th><th>Says</th><th>Confirmed</th><th>Feels</th><th>Teaching</th></tr>${stations.map(n=>{const s=LV[ca["a1:"+n]]??0,c=confirmed[n]??0;const feel=ca["a2:"+n]||"—",t=ca["a3:"+n];return `<tr><td>${esc(n)}</td><td><span class="chip lv${s}">${LVN[s]}</span></td><td>${p.confirmed?`<span class="chip lv${c}">${LVN[c]}</span>`:`<span class="muted small">none yet</span>`}${s>=3&&c<3?` <span class="chip c-amber">check</span>`:""}</td><td class="${feel==="Favorite"?"":feel==="Would rather not"?"":"muted"}">${feel==="Favorite"?"★ Favorite":feel==="Would rather not"?"✕ Rather not":esc(feel)}</td><td class="small">${t?esc(t):"—"}</td></tr>`}).join("")}</table></div></div>
+    <div class="grid2">
+      <div class="card"><h3>Tell me what you know</h3><p class="muted small">Only the gaps are listed; everything else was Know it.</p>${CROWS.filter(([n])=>ca["c:"+n]).map(([n])=>{const o=ca["c:"+n];const kinda=Object.entries(o).filter(([,v])=>v==="Kind of").map(([t])=>t),dont=Object.entries(o).filter(([,v])=>v==="Don't know").map(([t])=>t);if(!kinda.length&&!dont.length)return `<div class="small"><b style="font-weight:500">${esc(n)}</b> <span class="chip lv3">all known</span></div>`;return `<div class="small" style="margin-bottom:6px"><b style="font-weight:500">${esc(n)}</b><div class="chips" style="margin-top:3px">${dont.map(t=>`<span class="chip c-red">${esc(t)}</span>`).join("")}${kinda.map(t=>`<span class="chip c-amber">${esc(t)}</span>`).join("")}</div></div>`}).join("")}</div>
+      <div class="card"><h3>Quick checks, you grade</h3>${D.map(([id,q])=>{const a=ca[id];const g=grades[id];return `<div style="display:flex;flex-direction:column;gap:4px;padding-bottom:8px;border-bottom:1px solid var(--line)"><div class="small" style="font-weight:500">${esc(q)}</div><div class="cmt">${a==="N/A"?`<span class="chip c-amber">N/A, teach me</span>`:esc(a)}</div><div class="muted small">Store answer: ${esc(STORE_ANSWERS[id])}</div>${a==="N/A"?"":`<div class="chips">${["Right","Close","Teach it"].map(x=>`<button class="sm ${g===x?"on":""}" data-g="${id}" data-v="${x}">${x}</button>`).join("")}</div>`}</div>`}).join("")}</div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>What they should know</h3><div class="scroll"><table>${[...F_ALL,...F_ADULT].map(([id,q])=>{const v=ca[id];return `<tr><td class="small">${esc(q.replace(/^Do you know /,"").replace(/\?$/,""))}</td><td><span class="chip ${v==="Yes"?"lv3":v==="Kind of"?"c-amber":"c-red"}">${esc(v)}</span></td></tr>`}).join("")}</table></div></div>
+      <div class="card"><h3>Comments</h3>${comments.map(c=>`<div style="display:flex;flex-direction:column;gap:4px"><div class="muted small">${esc(c.who)}${c.id==="g41"?' <span class="chip c-red">private</span>':""}</div><div class="cmt">${esc(c.text)}</div>${replies[c.id]?`<div class="reply">You, today: ${esc(replies[c.id])}</div>`:`<div class="row"><input type="text" data-reply="${c.id}" placeholder="Reply (they'll see it)" style="min-height:40px;padding:8px 12px;flex:1"><button class="sm" data-send="${c.id}">Send</button></div>`}</div>`).join("")}
+        <h3 style="margin-top:6px">Meeting</h3><div class="kv"><b>RSVP</b><span>${esc(ca.h42||"—")}</span><b>One problem</b><span>${esc(ca.h43)||"—"}</span><b>Without their name</b><span>${esc(ca.h44)||"—"}</span></div></div>
+    </div>
+    <h2 style="margin-top:8px">Across the crew, this round</h2>
+    <div class="tiles">
+      <div class="tile"><span class="muted small">Checked in</span><span class="n">${CREW.length} / ${CREW.length}</span><span class="small">sample crew; the roll-up stays sample until the app collects these</span></div>
+      <div class="tile"><span class="muted small">Stations nobody calls a favorite</span><span class="n" style="color:var(--amber-fg)">${nobodyWants.length}</span><span class="small">${nobodyWants.map(esc).join(", ")}</span></div>
+      <div class="tile"><span class="muted small">Most asked to learn</span><span class="n" style="font-size:20px">${esc(topWant[0][0])}</span><span class="small">${topWant[0][1]} people, then ${esc(topWant[1][0])} (${topWant[1][1]})</span></div>
+      <div class="tile"><span class="muted small">Says-vs-confirmed to check</span><span class="n" style="color:var(--amber-fg)">${CREW.reduce((a,c)=>a+c.says,0)}</span><span class="small">across ${CREW.filter(c=>c.says).length} people</span></div>
+      <div class="tile"><span class="muted small">Meeting RSVPs</span><span class="n" style="font-size:20px">${(rsvp["Yes"]||0)+(rsvp["I'll be there"]||0)} yes · ${rsvp["I'll try"]||0} maybe · ${rsvp["No, and here's why"]||0} no</span><span class="small">leads all in</span></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>This week's agenda, most-mentioned first</h3><ol style="margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px">${agenda.map(([t,n])=>`<li>${esc(t)} <span class="chip c-gray">${n}</span></li>`).join("")}</ol><p class="muted small">Pick one. It goes on everyone's home screen as "this week we're fixing: …"</p></div>
+      <div class="card"><h3>Trainer pipeline</h3><ul class="clean">${CREW.filter(c=>c.wantTeach).map(c=>`<li><span class="chip c-blue">${c.wantTeach}</span><span class="small">${c.name} wants to teach ${c.wantTeach===1?"a station":c.wantTeach+" stations"}</span></li>`).join("")}</ul><h3 style="margin-top:8px">Flags across the crew</h3><ul class="clean">${CREW.flatMap(c=>c.flags.map(f=>`<li><span class="chip ${f.startsWith("Never")||f==="Private comment"?"c-red":f.startsWith("Not sure")?"c-amber":"c-gray"}">${esc(c.name)}</span><span class="small">${esc(f)}</span></li>`)).join("")}</ul></div>
+    </div>
+    <div class="card scroll"><h3>The spreadsheet</h3><table><tr><th>Person</th><th>Type</th><th>Favorite</th><th>Least</th><th>Wants to learn</th><th>Could teach</th><th>Says-vs-confirmed</th><th>Meeting</th><th>One problem</th></tr>${CREW.map(c=>`<tr><td><b style="font-weight:500">${c.name}</b><div class="muted small">${esc(c.role)}</div></td><td>${c.type}</td><td class="small">${esc(c.fav)}</td><td class="small">${esc(c.least)}</td><td class="small">${c.wants.map(esc).join(", ")}</td><td>${c.teachNow}</td><td>${c.says?`<span class="chip c-amber">${c.says}</span>`:"—"}</td><td class="small">${esc(c.rsvp)}</td><td class="small">${esc(c.problem)||"—"}</td></tr>`).join("")}</table></div>`;
+  document.getElementById("load").addEventListener("click",()=>{const t=document.getElementById("paste").value;try{pasted=decodeSubmission(t);pasteErr="";try{localStorage.setItem(KEY+"-pasted",JSON.stringify(pasted))}catch(e){}}catch(e){pasteErr=e.message}renderManager()});
+  const lkOut=document.getElementById("lk-out");const mkLink=()=>{const n=document.getElementById("lk-name").value.trim().toLowerCase().replace(/[^a-z]+/g,"-").replace(/^-|-$/g,"");lkOut.value=n?`${CONFIG.PAGE_URL}#${n}-${document.getElementById("lk-age").value}-${document.getElementById("lk-role").value}`:""};
+  ["lk-name","lk-age","lk-role"].forEach(id=>document.getElementById(id).addEventListener("input",mkLink));document.getElementById("lk-role").addEventListener("change",mkLink);document.getElementById("lk-age").addEventListener("change",mkLink);
+  document.getElementById("lk-copy").addEventListener("click",async()=>{mkLink();if(!lkOut.value)return;try{await navigator.clipboard.writeText(lkOut.value);document.getElementById("lk-msg").hidden=false}catch(e){lkOut.select();document.getElementById("lk-msg").textContent="Select the link and copy it.";document.getElementById("lk-msg").hidden=false}});
+  const ls=document.getElementById("loadsheet");if(ls)ls.addEventListener("click",()=>{mkey=document.getElementById("mkey").value.trim();loadSheet()});
+  app.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>{const s=inbox[parseInt(b.dataset.open,10)];try{pasted=decodeSubmission(s.code);pasted.submitted=String(s.received).slice(0,10);pasteErr="";try{localStorage.setItem(KEY+"-pasted",JSON.stringify(pasted))}catch(e){}}catch(e){pasteErr=e.message}renderManager()}));
+  const un=document.getElementById("unload");if(un)un.addEventListener("click",()=>{pasted=null;pasteErr="";try{localStorage.removeItem(KEY+"-pasted")}catch(e){}renderManager()});
+  app.querySelectorAll("[data-g]").forEach(b=>b.addEventListener("click",()=>{grades[b.dataset.g]=b.dataset.v;try{localStorage.setItem(KEY+"-grades",JSON.stringify(grades))}catch(e){}renderManager()}));
+  app.querySelectorAll("[data-send]").forEach(b=>b.addEventListener("click",()=>{const inp=app.querySelector(`[data-reply="${b.dataset.send}"]`);if(!inp.value.trim())return;replies[b.dataset.send]=inp.value.trim();try{localStorage.setItem(KEY+"-replies",JSON.stringify(replies))}catch(e){}renderManager()}));
+  window.scrollTo({top:0});
+}
+
+function render(){const v=(location.hash||"#take").slice(1);if(v==="manager")renderManager();else{if(personFromHash()&&st.screen!=="start"&&st.link!==personFromHash().slug){st={screen:"start",name:"",role:"crew",age:18,self:"",qi:0,qa:{},ci:0,ca:{},typed:"",chosen:{}}}renderTake()}}
+window.addEventListener("hashchange",render);render();
+</script>
+
+</body>
+</html>
