@@ -236,7 +236,7 @@ let grades={};try{grades=JSON.parse(localStorage.getItem(KEY+"-grades")||"{}")}c
 let replies={};try{replies=JSON.parse(localStorage.getItem(KEY+"-replies")||"{}")}catch(e){}
 const app=document.getElementById("app");
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const nav=v=>`<nav aria-label="Views"><a href="#take" ${v==="take"?'aria-current="page"':""}>Take it</a><a href="#manager" ${v==="manager"?'aria-current="page"':""}>What the manager sees</a></nav>`;
+const nav=v=>v==="manager"?`<nav aria-label="Views"><a href="#take">Take it</a><a href="#manager" aria-current="page">Manager view</a></nav>`:"";
 
 // ============ TAKE IT ============
 function renderTake(){
@@ -336,7 +336,6 @@ function renderDone(){
     <div class="card" style="border:2px solid var(--accent)"><h2 style="text-transform:uppercase;letter-spacing:.03em;font-size:17px">To save your results, press Email to my manager</h2>
       ${CONFIG.SHEET_URL?`<p class="muted small">One tap. It goes straight to your manager's sheet; nobody else sees it.</p><button class="primary" id="send">${st.sent?"Sent ✓ · send again":"Send to my manager"}</button><p class="small muted" id="sent" ${st.sent?"":"hidden"}>Sent. You're done.</p><p class="err" id="senderr" hidden>Couldn't send. Copy your results below and text them instead.</p><button class="ghost" id="copy">Or copy my results</button>`:`<p class="muted small">It opens your mail app with your manager's address and your results already filled in. Just hit send.</p><a class="primary" id="mail" href="#" style="display:block;text-align:center;padding:14px 16px;border-radius:12px;background:var(--accent);color:var(--accent-fg);font-weight:600;font-size:17px;text-decoration:none">Email to my manager</a><p class="small muted">Mail app didn't open? Tap below, then paste it into a text or email to your manager.</p><button id="copy" style="width:100%;text-align:center">Copy my results instead</button>`}
       <p class="small muted" id="copied" hidden>Copied. Now paste it to your manager.</p><textarea id="out" hidden readonly style="min-height:160px;font-size:12px"></textarea></div>
-    <a href="#manager" class="ghost" style="color:var(--accent);font-weight:500">See what the manager sees from this →</a>
     <button class="ghost" id="reset">Start over</button>`;
   app.querySelectorAll("button[data-pair]").forEach(b=>b.addEventListener("click",()=>{st.chosen[b.dataset.pair]=b.dataset.letter;save();render()}));
   document.getElementById("copy").addEventListener("click",async()=>{const text=resultsText(st);const out=document.getElementById("out");out.value=text;try{await navigator.clipboard.writeText(text);document.getElementById("copied").hidden=false}catch(e){out.hidden=false;document.getElementById("copied").textContent="Select all the text below and copy it.";document.getElementById("copied").hidden=false}});
